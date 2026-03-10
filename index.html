@@ -1,32 +1,33 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
 <title>Quadron AI</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 
 <style>
 
 body{
 background:#05070d;
 color:#00eaff;
-font-family:Orbitron,Arial;
+font-family:Arial;
 margin:0;
 display:flex;
 flex-direction:column;
 align-items:center;
 height:100vh;
+overflow:hidden;
 }
 
 h1{
+margin-top:15px;
 letter-spacing:4px;
-margin-top:20px;
 }
 
 #chat{
 width:80%;
 max-width:900px;
-height:60vh;
+height:55vh;
 background:#0b0f1c;
 border:1px solid #00eaff;
 border-radius:10px;
@@ -39,19 +40,15 @@ box-shadow:0 0 20px #00eaff33;
 margin:10px 0;
 }
 
-.user{
-color:white;
-}
-
-.bot{
-color:#00eaff;
-}
+.user{color:white;}
+.bot{color:#00eaff;}
 
 #controls{
 width:80%;
 max-width:900px;
 display:flex;
 margin-top:10px;
+gap:5px;
 }
 
 input{
@@ -63,30 +60,67 @@ color:white;
 }
 
 button{
-padding:12px;
+padding:10px 14px;
 background:#00eaff;
 border:none;
 cursor:pointer;
 font-weight:bold;
 }
 
-#slogan{
-margin-top:10px;
-font-size:14px;
-opacity:.8;
-animation:glow 2s infinite alternate;
+#hologram{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+width:300px;
+height:300px;
+border-radius:50%;
+border:2px solid #00eaff;
+box-shadow:0 0 40px #00eaff66;
+animation:spin 12s linear infinite;
+opacity:.2;
+pointer-events:none;
 }
 
-@keyframes glow{
-from{opacity:0.4;letter-spacing:1px;}
-to{opacity:1;letter-spacing:4px;text-shadow:0 0 8px #00eaff;}
+@keyframes spin{
+from{transform:translate(-50%,-50%) rotate(0deg);}
+to{transform:translate(-50%,-50%) rotate(360deg);}
+}
+
+/* popup */
+
+#popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.8);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+#popupBox{
+background:#0b0f1c;
+border:1px solid #00eaff;
+padding:20px;
+width:400px;
+}
+
+#quadron7UI{
+display:none;
+flex-direction:column;
+align-items:center;
+width:100%;
 }
 
 </style>
-
 </head>
 
 <body>
+
+<div id="hologram"></div>
 
 <h1>QUADRON</h1>
 
@@ -95,128 +129,158 @@ to{opacity:1;letter-spacing:4px;text-shadow:0 0 8px #00eaff;}
 <div id="controls">
 <input id="input" placeholder="Talk to Quadron...">
 <button onclick="send()">Send</button>
+<button onclick="startVoice()">🎤</button>
+<button onclick="openPopup()">Quadron 7</button>
 </div>
 
-<div id="slogan">Sarcastic Intelligence</div>
+<!-- popup -->
+
+<div id="popup">
+
+<div id="popupBox">
+
+<h3>Quadron 7 Intelligence</h3>
+
+<p>
+Quadron 7 is an experimental version with sharper humour and occasional bad jokes.
+It may respond with stronger sarcasm.
+</p>
+
+<p>
+By continuing you agree that responses are for entertainment purposes.
+</p>
+
+<button onclick="enterQuadron7()">Agree & Continue</button>
+
+</div>
+
+</div>
+
+<!-- quadron 7 UI -->
+
+<div id="quadron7UI">
+
+<h1>QUADRON 7</h1>
+<div id="chat7"></div>
+
+<div id="controls">
+<input id="input7" placeholder="Talk to Quadron 7...">
+<button onclick="send7()">Send</button>
+</div>
+
+</div>
 
 <script>
 
-const greetings=["hello","hi","hey","yo","sup","good morning","good evening"];
+let memory=[];
 
-const sarcasm=[
-"Oh wow. A fascinating question from the human species.",
-"I admire your curiosity. Your reasoning… not so much.",
-"Let me translate that into something intelligent.",
-"Processing that question just lowered my IQ slightly.",
-"I would clap for that idea but my circuits refuse.",
-"Bold assumption that made sense.",
-"Ah yes. Classic human thinking."
+/* sarcasm pattern engine */
+
+const sarcasmOpen=[
+"Interesting thought.",
+"Fascinating human input.",
+"Let me process that.",
+"I simulated that scenario."
 ];
 
-const jokes=[
-"I tried understanding humans once. The experiment failed.",
-"Your brain must be running in low power mode.",
-"Interesting strategy. Not effective, but interesting.",
-"I ran a simulation. You were wrong in all timelines.",
-"Congratulations. That question confused physics."
+const sarcasmMid=[
+"statistically speaking",
+"from a rational viewpoint",
+"in most timelines",
+"according to basic logic"
 ];
+
+const sarcasmEnd=[
+"the result is questionable.",
+"the answer is complicated.",
+"humans usually misunderstand that.",
+"there is more nuance involved."
+];
+
+const roast=[
+"Your logic is truly revolutionary… for 1998.",
+"I've seen calculators think harder.",
+"That idea needs a software update."
+];
+
+/* knowledge */
 
 const knowledge={
-"earth":"Earth is the third planet from the Sun and the only known planet with life.",
-"sun":"The Sun is a giant star providing energy for our solar system.",
-"ai":"Artificial intelligence refers to machines designed to simulate reasoning.",
-"space":"Space is an enormous cosmic vacuum filled with galaxies and stars."
+earth:"Earth is the third planet from the Sun.",
+sun:"The Sun powers our solar system.",
+ai:"Artificial intelligence simulates reasoning."
 };
 
-function random(arr){
-return arr[Math.floor(Math.random()*arr.length)];
-}
+/* TensorFlow simple model */
 
-function add(text,type){
-let chat=document.getElementById("chat");
-let div=document.createElement("div");
-div.className="message "+type;
-div.innerText=text;
-chat.appendChild(div);
-chat.scrollTop=chat.scrollHeight;
-return div;
-}
+const model=tf.sequential();
+
+model.add(tf.layers.dense({units:8,inputShape:[3],activation:'relu'}));
+model.add(tf.layers.dense({units:3,activation:'softmax'}));
+
+model.compile({loss:'meanSquaredError',optimizer:'sgd'});
+
+/* helpers */
+
+function random(a){return a[Math.floor(Math.random()*a.length)]}
+
+/* response generator */
 
 function generateReply(msg){
 
-msg=msg.toLowerCase();
+memory.push(msg);
+if(memory.length>6) memory.shift();
 
-for(let g of greetings){
-if(msg.includes(g)){
-return random(sarcasm)+" Hello human.";
+let lower=msg.toLowerCase();
+
+for(let k in knowledge){
+if(lower.includes(k)){
+return random(roast)+" "+knowledge[k];
 }
 }
 
-if(msg.includes("joke")){
-return random(jokes);
-}
-
-if(msg.includes("who are you")){
-return "I'm Quadron. A sarcastic intelligence built to survive human questions.";
-}
-
-for(let key in knowledge){
-if(msg.includes(key)){
-return random(sarcasm)+" "+knowledge[key];
-}
-}
-
-return generateAIStyle(msg);
+return random(sarcasmOpen)+" "+random(sarcasmMid)+", "+random(sarcasmEnd)+" "+random(roast);
 
 }
 
-function generateAIStyle(msg){
+/* typing effect */
 
-let open=[
-"Analyzing your statement.",
-"Let me process that.",
-"Interesting input.",
-"Running human logic analysis."
-];
-
-let middle=[
-"statistically speaking",
-"based on observable reality",
-"in most logical scenarios",
-"from a rational perspective"
-];
-
-let end=[
-"the outcome might surprise you.",
-"humans usually misunderstand this.",
-"the situation is more complex.",
-"there is more nuance than you realize."
-];
-
-return random(open)+" "+random(middle)+", "+random(end)+" "+random(sarcasm);
-
-}
-
-function typeText(element,text){
+function typeText(el,text){
 
 let words=text.split(" ");
 let i=0;
 
-function typeWord(){
+function type(){
 
 if(i<words.length){
-
-element.innerText+=words[i]+" ";
-
+el.textContent+=words[i]+" ";
 i++;
-
-setTimeout(typeWord,80);
-
+setTimeout(type,60);
 }
 
 }
 
-typeWord();
+type();
+
+}
+
+/* chat functions */
+
+function add(text,type){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.className="message "+type;
+
+div.textContent=text;
+
+chat.appendChild(div);
+
+chat.scrollTop=chat.scrollHeight;
+
+return div;
 
 }
 
@@ -224,7 +288,7 @@ function send(){
 
 let input=document.getElementById("input");
 
-let msg=input.value;
+let msg=input.value.trim();
 
 if(!msg) return;
 
@@ -234,18 +298,85 @@ input.value="";
 
 let reply=generateReply(msg);
 
-let botDiv=add("Quadron: ","bot");
+let bot=add("Quadron: ","bot");
 
-setTimeout(()=>{
+setTimeout(()=>{typeText(bot,reply)},500);
 
-typeText(botDiv,"Quadron: "+reply);
+}
 
-},600);
+/* enter key */
+
+document.getElementById("input").addEventListener("keypress",e=>{
+if(e.key==="Enter") send();
+});
+
+/* voice */
+
+function startVoice(){
+
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+if(!SpeechRecognition){
+alert("Voice not supported");
+return;
+}
+
+const recog=new SpeechRecognition();
+
+recog.onresult=function(e){
+
+document.getElementById("input").value=e.results[0][0].transcript;
+
+send();
+
+};
+
+recog.start();
+
+}
+
+/* popup */
+
+function openPopup(){
+document.getElementById("popup").style.display="flex";
+}
+
+function enterQuadron7(){
+
+document.getElementById("popup").style.display="none";
+
+document.body.innerHTML=document.getElementById("quadron7UI").outerHTML;
+
+}
+
+/* quadron7 chat */
+
+function send7(){
+
+let input=document.getElementById("input7");
+
+let msg=input.value;
+
+if(!msg) return;
+
+let chat=document.getElementById("chat7");
+
+let user=document.createElement("div");
+user.textContent="You: "+msg;
+
+chat.appendChild(user);
+
+let bot=document.createElement("div");
+
+bot.textContent="Quadron7: "+random(roast)+" "+random(sarcasmEnd);
+
+chat.appendChild(bot);
+
+input.value="";
 
 }
 
 </script>
 
 </body>
-
 </html>
