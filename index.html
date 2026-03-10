@@ -1,1 +1,236 @@
+<!DOCTYPE html>
+<html>
 
+<head>
+
+<title>Quadron AI</title>
+
+<style>
+
+body{
+background:#05070d;
+color:#00eaff;
+font-family:Orbitron,Arial;
+margin:0;
+display:flex;
+flex-direction:column;
+align-items:center;
+height:100vh;
+}
+
+h1{
+letter-spacing:4px;
+margin-top:20px;
+}
+
+#chat{
+width:80%;
+max-width:900px;
+height:65vh;
+background:#0b0f1c;
+border:1px solid #00eaff;
+border-radius:10px;
+padding:15px;
+overflow-y:auto;
+box-shadow:0 0 20px #00eaff33;
+}
+
+.message{
+margin:8px 0;
+}
+
+.user{
+color:white;
+}
+
+.bot{
+color:#00eaff;
+}
+
+#controls{
+width:80%;
+max-width:900px;
+display:flex;
+margin-top:10px;
+}
+
+input{
+flex:1;
+padding:12px;
+background:#0b0f1c;
+border:1px solid #00eaff;
+color:white;
+}
+
+button{
+padding:12px;
+background:#00eaff;
+border:none;
+cursor:pointer;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>QUADRON</h1>
+
+<div id="chat"></div>
+
+<div id="controls">
+<input id="input" placeholder="Talk to Quadron...">
+<button onclick="send()">Send</button>
+</div>
+
+<script>
+
+const greetings=[
+"hello","hi","hey","yo","sup","good morning","good evening","good afternoon","wzp","yo wzp"
+];
+
+const sarcasm=[
+"Oh fantastic. Another human question.",
+"I admire the confidence. Not the logic, but the confidence.",
+"Let me translate that into something intelligent.",
+"Your curiosity is impressive. Your phrasing… less so.",
+"I would roll my eyes if I had eyes.",
+"Ah yes. The classic human brain moment.",
+"Fascinating. Please continue confusing reality."
+];
+
+const jokes=[
+"I tried understanding humans once. It was exhausting.",
+"I would insult you but evolution already did half the work.",
+"Your brain must be on battery saver mode.",
+"I ran a simulation. The result: you are funny accidentally.",
+"Bold strategy asking me that."
+];
+
+const knowledge={
+
+"earth":"Earth is the third planet from the Sun and the only known world with life.",
+"sun":"The Sun is a giant star providing energy for life on Earth.",
+"ai":"Artificial intelligence refers to machines designed to simulate human thinking.",
+"space":"Space is an enormous vacuum containing galaxies, stars and planets.",
+"computer":"A computer is a programmable machine that processes information."
+
+};
+
+function random(arr){
+return arr[Math.floor(Math.random()*arr.length)];
+}
+
+function add(text,type){
+
+let chat=document.getElementById("chat");
+
+let div=document.createElement("div");
+
+div.className="message "+type;
+
+div.innerText=text;
+
+chat.appendChild(div);
+
+chat.scrollTop=chat.scrollHeight;
+
+}
+
+function generateSmartReply(msg){
+
+msg=msg.toLowerCase();
+
+for(let g of greetings){
+if(msg.includes(g)){
+return "Hello human. Try not to break the internet today.";
+}
+}
+
+if(msg.includes("joke")){
+return random(jokes);
+}
+
+if(msg.includes("who are you")){
+return "I'm Quadron. The internet's most sarcastic artificial intelligence.";
+}
+
+for(let key in knowledge){
+if(msg.includes(key)){
+return random(sarcasm)+" "+knowledge[key];
+}
+}
+
+return generateAIStyle(msg);
+
+}
+
+function generateAIStyle(msg){
+
+let openings=[
+"Interesting question.",
+"Let me analyze that.",
+"Processing human input.",
+"Hmm.",
+"Alright."
+];
+
+let middles=[
+"From a logical perspective",
+"If we apply basic reasoning",
+"Statistically speaking",
+"In most scenarios",
+"Considering available knowledge"
+];
+
+let endings=[
+"that seems plausible.",
+"the answer depends on context.",
+"the result may surprise you.",
+"humans usually misunderstand that.",
+"there is more complexity than you think."
+];
+
+return random(openings)+" "+random(middles)+", "+random(endings)+" "+random(sarcasm);
+
+}
+
+function speak(text){
+
+let speech=new SpeechSynthesisUtterance(text);
+
+speech.rate=1;
+
+speech.pitch=1.2;
+
+speechSynthesis.speak(speech);
+
+}
+
+function send(){
+
+let input=document.getElementById("input");
+
+let msg=input.value;
+
+if(!msg) return;
+
+add("You: "+msg,"user");
+
+input.value="";
+
+let reply=generateSmartReply(msg);
+
+add("Quadron: "+reply,"bot");
+
+speak(reply);
+
+}
+
+</script>
+
+</body>
+
+</html>
