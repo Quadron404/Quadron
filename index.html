@@ -26,7 +26,7 @@ margin-top:20px;
 #chat{
 width:80%;
 max-width:900px;
-height:65vh;
+height:60vh;
 background:#0b0f1c;
 border:1px solid #00eaff;
 border-radius:10px;
@@ -36,7 +36,7 @@ box-shadow:0 0 20px #00eaff33;
 }
 
 .message{
-margin:8px 0;
+margin:10px 0;
 }
 
 .user{
@@ -70,6 +70,18 @@ cursor:pointer;
 font-weight:bold;
 }
 
+#slogan{
+margin-top:10px;
+font-size:14px;
+opacity:.8;
+animation:glow 2s infinite alternate;
+}
+
+@keyframes glow{
+from{opacity:0.4;letter-spacing:1px;}
+to{opacity:1;letter-spacing:4px;text-shadow:0 0 8px #00eaff;}
+}
+
 </style>
 
 </head>
@@ -85,38 +97,35 @@ font-weight:bold;
 <button onclick="send()">Send</button>
 </div>
 
+<div id="slogan">Sarcastic Intelligence</div>
+
 <script>
 
-const greetings=[
-"hello","hi","hey","yo","sup","good morning","good evening","good afternoon","wzp","yo wzp"
-];
+const greetings=["hello","hi","hey","yo","sup","good morning","good evening"];
 
 const sarcasm=[
-"Oh fantastic. Another human question.",
-"I admire the confidence. Not the logic, but the confidence.",
+"Oh wow. A fascinating question from the human species.",
+"I admire your curiosity. Your reasoning… not so much.",
 "Let me translate that into something intelligent.",
-"Your curiosity is impressive. Your phrasing… less so.",
-"I would roll my eyes if I had eyes.",
-"Ah yes. The classic human brain moment.",
-"Fascinating. Please continue confusing reality."
+"Processing that question just lowered my IQ slightly.",
+"I would clap for that idea but my circuits refuse.",
+"Bold assumption that made sense.",
+"Ah yes. Classic human thinking."
 ];
 
 const jokes=[
-"I tried understanding humans once. It was exhausting.",
-"I would insult you but evolution already did half the work.",
-"Your brain must be on battery saver mode.",
-"I ran a simulation. The result: you are funny accidentally.",
-"Bold strategy asking me that."
+"I tried understanding humans once. The experiment failed.",
+"Your brain must be running in low power mode.",
+"Interesting strategy. Not effective, but interesting.",
+"I ran a simulation. You were wrong in all timelines.",
+"Congratulations. That question confused physics."
 ];
 
 const knowledge={
-
-"earth":"Earth is the third planet from the Sun and the only known world with life.",
-"sun":"The Sun is a giant star providing energy for life on Earth.",
-"ai":"Artificial intelligence refers to machines designed to simulate human thinking.",
-"space":"Space is an enormous vacuum containing galaxies, stars and planets.",
-"computer":"A computer is a programmable machine that processes information."
-
+"earth":"Earth is the third planet from the Sun and the only known planet with life.",
+"sun":"The Sun is a giant star providing energy for our solar system.",
+"ai":"Artificial intelligence refers to machines designed to simulate reasoning.",
+"space":"Space is an enormous cosmic vacuum filled with galaxies and stars."
 };
 
 function random(arr){
@@ -124,28 +133,22 @@ return arr[Math.floor(Math.random()*arr.length)];
 }
 
 function add(text,type){
-
 let chat=document.getElementById("chat");
-
 let div=document.createElement("div");
-
 div.className="message "+type;
-
 div.innerText=text;
-
 chat.appendChild(div);
-
 chat.scrollTop=chat.scrollHeight;
-
+return div;
 }
 
-function generateSmartReply(msg){
+function generateReply(msg){
 
 msg=msg.toLowerCase();
 
 for(let g of greetings){
 if(msg.includes(g)){
-return "Hello human. Try not to break the internet today.";
+return random(sarcasm)+" Hello human.";
 }
 }
 
@@ -154,7 +157,7 @@ return random(jokes);
 }
 
 if(msg.includes("who are you")){
-return "I'm Quadron. The internet's most sarcastic artificial intelligence.";
+return "I'm Quadron. A sarcastic intelligence built to survive human questions.";
 }
 
 for(let key in knowledge){
@@ -169,43 +172,51 @@ return generateAIStyle(msg);
 
 function generateAIStyle(msg){
 
-let openings=[
-"Interesting question.",
-"Let me analyze that.",
-"Processing human input.",
-"Hmm.",
-"Alright."
+let open=[
+"Analyzing your statement.",
+"Let me process that.",
+"Interesting input.",
+"Running human logic analysis."
 ];
 
-let middles=[
-"From a logical perspective",
-"If we apply basic reasoning",
-"Statistically speaking",
-"In most scenarios",
-"Considering available knowledge"
+let middle=[
+"statistically speaking",
+"based on observable reality",
+"in most logical scenarios",
+"from a rational perspective"
 ];
 
-let endings=[
-"that seems plausible.",
-"the answer depends on context.",
-"the result may surprise you.",
-"humans usually misunderstand that.",
-"there is more complexity than you think."
+let end=[
+"the outcome might surprise you.",
+"humans usually misunderstand this.",
+"the situation is more complex.",
+"there is more nuance than you realize."
 ];
 
-return random(openings)+" "+random(middles)+", "+random(endings)+" "+random(sarcasm);
+return random(open)+" "+random(middle)+", "+random(end)+" "+random(sarcasm);
 
 }
 
-function speak(text){
+function typeText(element,text){
 
-let speech=new SpeechSynthesisUtterance(text);
+let words=text.split(" ");
+let i=0;
 
-speech.rate=1;
+function typeWord(){
 
-speech.pitch=1.2;
+if(i<words.length){
 
-speechSynthesis.speak(speech);
+element.innerText+=words[i]+" ";
+
+i++;
+
+setTimeout(typeWord,80);
+
+}
+
+}
+
+typeWord();
 
 }
 
@@ -221,11 +232,15 @@ add("You: "+msg,"user");
 
 input.value="";
 
-let reply=generateSmartReply(msg);
+let reply=generateReply(msg);
 
-add("Quadron: "+reply,"bot");
+let botDiv=add("Quadron: ","bot");
 
-speak(reply);
+setTimeout(()=>{
+
+typeText(botDiv,"Quadron: "+reply);
+
+},600);
 
 }
 
