@@ -5,10 +5,15 @@
 
 <title>Quadron AI</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://unpkg.com/compromise"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
 <style>
 
 body{
-background:#05070d;
+background:#07090f;
 color:#00eaff;
 font-family:Arial;
 margin:0;
@@ -19,41 +24,39 @@ height:100vh;
 }
 
 h1{
-margin-top:15px;
+margin-top:10px;
 letter-spacing:4px;
 }
 
 #chat{
-width:80%;
+width:92%;
 max-width:900px;
 height:55vh;
-background:#0b0f1c;
-border:1px solid #00eaff;
+background:#0c0f1c;
 border-radius:10px;
-padding:15px;
+border:1px solid #00eaff;
+padding:12px;
 overflow-y:auto;
-box-shadow:0 0 20px #00eaff33;
 }
 
-.message{
-margin:10px 0;
-}
+.message{margin:8px 0;}
 
 .user{color:white;}
+
 .bot{color:#00eaff;}
 
 #controls{
-width:80%;
+width:92%;
 max-width:900px;
 display:flex;
-margin-top:10px;
 gap:6px;
+margin-top:8px;
 }
 
 input{
 flex:1;
 padding:12px;
-background:#0b0f1c;
+background:#0c0f1c;
 border:1px solid #00eaff;
 color:white;
 }
@@ -63,27 +66,25 @@ padding:10px 14px;
 background:#00eaff;
 border:none;
 cursor:pointer;
-font-weight:bold;
 }
 
-#hologram{
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-width:280px;
-height:280px;
-border-radius:50%;
-border:2px solid #00eaff;
-box-shadow:0 0 40px #00eaff66;
-animation:spin 12s linear infinite;
-opacity:.18;
-pointer-events:none;
+#voicePanel{
+margin-top:10px;
+display:flex;
+gap:3px;
+height:30px;
 }
 
-@keyframes spin{
-from{transform:translate(-50%,-50%) rotate(0deg);}
-to{transform:translate(-50%,-50%) rotate(360deg);}
+.bar{
+width:4px;
+background:#00eaff;
+animation:voice 1s infinite ease-in-out;
+}
+
+@keyframes voice{
+0%{height:5px;}
+50%{height:30px;}
+100%{height:5px;}
 }
 
 /* popup */
@@ -101,17 +102,52 @@ justify-content:center;
 }
 
 #popupBox{
-background:#0b0f1c;
-border:1px solid #00eaff;
-padding:20px;
-width:420px;
+background:#111;
+color:white;
+padding:25px;
+border-radius:10px;
+width:340px;
+text-align:center;
 }
 
-#quadron7UI{
+/* quadron7 */
+
+#quadron7{
 display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:white;
 flex-direction:column;
 align-items:center;
+}
+
+#stars{
+position:absolute;
 width:100%;
+height:100%;
+background:url("https://www.transparenttextures.com/patterns/stardust.png");
+animation:stars 60s linear infinite;
+opacity:.6;
+}
+
+@keyframes stars{
+from{background-position:0 0;}
+to{background-position:1000px 1000px;}
+}
+
+#chat7{
+width:92%;
+max-width:900px;
+height:55vh;
+background:rgba(0,0,0,.6);
+border:1px solid white;
+padding:10px;
+overflow-y:auto;
+z-index:2;
 }
 
 </style>
@@ -120,21 +156,28 @@ width:100%;
 
 <body>
 
-<div id="hologram"></div>
-
-<div id="mainUI">
-
 <h1>QUADRON</h1>
 
 <div id="chat"></div>
 
 <div id="controls">
-<input id="input" placeholder="Talk to Quadron...">
+
+<input id="input" placeholder="Ask Quadron...">
+
 <button onclick="send()">Send</button>
-<button onclick="startVoice()">🎤</button>
+
+<button onclick="voiceInput()">🎤</button>
+
 <button onclick="openPopup()">Quadron 7</button>
+
 </div>
 
+<div id="voicePanel">
+<div class="bar"></div>
+<div class="bar"></div>
+<div class="bar"></div>
+<div class="bar"></div>
+<div class="bar"></div>
 </div>
 
 <!-- popup -->
@@ -143,37 +186,41 @@ width:100%;
 
 <div id="popupBox">
 
-<h3>Quadron 7 Experimental Intelligence</h3>
+<h3>Quadron 7 Experimental Mode</h3>
 
 <p>
-Quadron 7 is an experimental version with stronger sarcasm and exaggerated humor.
-Responses are automatically generated and may include very silly or intentionally bad jokes.
+Quadron 7 is an advanced experimental intelligence with stronger humor
+and experimental responses.
 </p>
 
 <p>
-By continuing you accept that:
-<br>• responses are AI-generated
-<br>• replies are for entertainment
-<br>• answers may not always be accurate
+By continuing you agree responses are AI-generated and for entertainment.
 </p>
 
-<button onclick="enterQuadron7()">Agree & Continue</button>
+<button onclick="enterQ7()">Agree</button>
 
 </div>
 
 </div>
 
-<!-- quadron 7 UI -->
+<!-- quadron7 -->
 
-<div id="quadron7UI">
+<div id="quadron7">
 
-<h1>QUADRON 7</h1>
+<div id="stars"></div>
 
-<div id="chat7" style="width:80%;max-width:900px;height:55vh;background:#0b0f1c;border:1px solid #00eaff;border-radius:10px;padding:15px;overflow-y:auto;"></div>
+<h1 style="z-index:2">QUADRON 7</h1>
 
-<div id="controls">
-<input id="input7" placeholder="Talk to Quadron 7...">
+<div id="chat7"></div>
+
+<div id="controls" style="z-index:2">
+
+<input id="input7">
+
 <button onclick="send7()">Send</button>
+
+<button onclick="voiceInput7()">🎤</button>
+
 </div>
 
 </div>
@@ -181,68 +228,55 @@ By continuing you accept that:
 <script>
 
 let memory=[];
+let lastReplies=[];
 
-function random(arr){
-return arr[Math.floor(Math.random()*arr.length)];
+function random(a){return a[Math.floor(Math.random()*a.length)]}
+
+/* keyword extraction */
+
+function extractKeywords(text){
+
+let doc=nlp(text);
+
+let nouns=doc.nouns().out('array');
+
+let verbs=doc.verbs().out('array');
+
+return nouns.concat(verbs);
+
 }
-
-/* sarcasm generator */
-
-const open=[
-"Analyzing your statement.",
-"Processing human logic.",
-"Interesting input detected.",
-"Evaluating your idea."
-];
-
-const analysis=[
-"statistically speaking",
-"from a rational perspective",
-"in most timelines",
-"according to observable reality"
-];
-
-const sarcasm=[
-"that might not work as expected.",
-"humans tend to misunderstand this.",
-"the result may surprise you.",
-"that assumption is… optimistic."
-];
-
-const humor=[
-"I'll pretend that made sense.",
-"My circuits are slightly concerned.",
-"Even a calculator would hesitate.",
-"That deserves a creativity award."
-];
-
-/* knowledge */
-
-const knowledge={
-earth:"Earth is the third planet from the Sun.",
-sun:"The Sun powers our solar system.",
-ai:"Artificial intelligence simulates reasoning.",
-space:"Space contains billions of galaxies."
-};
 
 /* response generator */
 
-function generateResponse(msg){
+function generateResponse(text){
 
-memory.push(msg);
-if(memory.length>8) memory.shift();
+let keys=extractKeywords(text);
 
-let lower=msg.toLowerCase();
+let open=[
+"Analyzing",
+"Processing",
+"Evaluating",
+"Considering"
+];
 
-for(let key in knowledge){
+let humor=[
+"interesting logic detected",
+"humans think creatively sometimes",
+"this question is unusual",
+"this idea is intriguing"
+];
 
-if(lower.includes(key)){
-return random(open)+" "+knowledge[key]+" "+random(humor);
+let resp=random(open)+" "+keys.join(" ")+" — "+random(humor)+".";
+
+if(lastReplies.includes(resp)){
+resp=random(open)+" "+random(humor);
 }
 
-}
+lastReplies.push(resp);
 
-return random(open)+" "+random(analysis)+", "+random(sarcasm)+" "+random(humor);
+if(lastReplies.length>5) lastReplies.shift();
+
+return resp;
 
 }
 
@@ -256,9 +290,13 @@ let i=0;
 function type(){
 
 if(i<words.length){
+
 el.textContent+=words[i]+" ";
+
 i++;
-setTimeout(type,60);
+
+setTimeout(type,50);
+
 }
 
 }
@@ -267,20 +305,49 @@ type();
 
 }
 
-/* speak */
+/* voice output */
 
-function speak(text){
+function speak(t){
 
-let speech=new SpeechSynthesisUtterance(text);
+let s=new SpeechSynthesisUtterance(t);
 
-speech.rate=1;
-speech.pitch=0.9;
+s.rate=1;
 
-speechSynthesis.speak(speech);
+speechSynthesis.speak(s);
 
 }
 
-/* chat add */
+/* main send */
+
+function send(){
+
+let input=document.getElementById("input");
+
+let msg=input.value;
+
+if(!msg) return;
+
+add("You: "+msg,"user");
+
+input.value="";
+
+let r=generateResponse(msg);
+
+let bot=add("Quadron: ","bot");
+
+setTimeout(()=>{
+
+typeText(bot,r);
+
+speak(r);
+
+},400);
+
+memory.push(msg);
+
+}
+
+/* add chat */
 
 function add(text,type){
 
@@ -300,79 +367,39 @@ return div;
 
 }
 
-/* send */
-
-function send(){
-
-let input=document.getElementById("input");
-
-let msg=input.value.trim();
-
-if(!msg) return;
-
-add("You: "+msg,"user");
-
-input.value="";
-
-let reply=generateResponse(msg);
-
-let bot=add("Quadron: ","bot");
-
-setTimeout(()=>{
-
-typeText(bot,reply);
-speak(reply);
-
-},500);
-
-}
-
-/* enter key */
-
-document.getElementById("input").addEventListener("keypress",e=>{
-if(e.key==="Enter") send();
-});
-
 /* voice input */
 
-function startVoice(){
+function voiceInput(){
 
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 
-if(!SpeechRecognition){
-alert("Voice recognition not supported.");
-return;
-}
+let rec=new SpeechRecognition();
 
-let recog=new SpeechRecognition();
+rec.onresult=function(e){
 
-recog.onresult=function(e){
-
-let text=e.results[0][0].transcript;
-
-document.getElementById("input").value=text;
+document.getElementById("input").value=e.results[0][0].transcript;
 
 send();
 
 };
 
-recog.start();
+rec.start();
 
 }
 
 /* popup */
 
 function openPopup(){
+
 document.getElementById("popup").style.display="flex";
+
 }
 
-function enterQuadron7(){
+function enterQ7(){
 
 document.getElementById("popup").style.display="none";
 
-document.getElementById("mainUI").style.display="none";
-
-document.getElementById("quadron7UI").style.display="flex";
+document.getElementById("quadron7").style.display="flex";
 
 }
 
@@ -384,28 +411,35 @@ let input=document.getElementById("input7");
 
 let msg=input.value;
 
-if(!msg) return;
-
 let chat=document.getElementById("chat7");
 
-let user=document.createElement("div");
-user.textContent="You: "+msg;
-chat.appendChild(user);
+let u=document.createElement("div");
 
-let reply=random(open)+" "+random(analysis)+", "+random(sarcasm)+" "+random(humor);
+u.textContent="You: "+msg;
 
-let bot=document.createElement("div");
+chat.appendChild(u);
 
-bot.textContent="Quadron7: "+reply;
+let r=generateResponse(msg);
 
-chat.appendChild(bot);
+let b=document.createElement("div");
+
+b.textContent="Quadron7: "+r;
+
+chat.appendChild(b);
+
+speak(r);
 
 input.value="";
 
 }
 
+/* enter key */
+
+document.getElementById("input").addEventListener("keypress",e=>{
+if(e.key==="Enter") send();
+});
+
 </script>
 
 </body>
-
 </html>
